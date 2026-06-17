@@ -359,6 +359,10 @@ func handleEINTR(fn func() error) (err error) {
 // Returns a new request, or error. Returns
 // nil, OK if we have too many readers already.
 func (ms *Server) readRequest() (req *requestAlloc, code Status) {
+	if ms.draining.Load() {
+		return nil, OK
+	}
+
 	ms.reqMu.Lock()
 	if ms.reqReaders > ms.maxReaders {
 		ms.reqMu.Unlock()
@@ -408,7 +412,7 @@ func (ms *Server) readRequest() (req *requestAlloc, code Status) {
 		ms.readPool.Put(destIface)
 	}
 	ms.reqReaders--
-	if !ms.singleReader && ms.reqReaders <= 0 && !needsBackPressure {
+	if !ms.singleReader && ms.reqReaders <= 0 && !needsBackPressure && !ms.draining.Load() {
 		ms.loops.Add(1)
 		go ms.loop()
 	}
@@ -462,9 +466,11 @@ func (ms *Server) Serve() {
 	ms.loop()
 	ms.loops.Wait()
 
-	ms.writeMu.Lock()
-	syscall.Close(ms.mountFd)
-	ms.writeMu.Unlock()
+	if !ms.draining.Load() {
+		ms.writeMu.Lock()
+		syscall.Close(ms.mountFd)
+		ms.writeMu.Unlock()
+	}
 
 	// shutdown in-flight cache retrieves.
 	//
@@ -548,6 +554,14 @@ func (ms *Server) loop() {
 	defer ms.loops.Done()
 exit:
 	for {
+		// Draining is cooperative: a goroutine already parked in syscall.Read may
+		// still consume one more request before it observes the flag. That request
+		// is counted in inflight; callers bound DrainInflight and abandon hand-off
+		// on timeout rather than closing mountFd here.
+		if ms.draining.Load() {
+			break exit
+		}
+
 		req, errNo := ms.readRequest()
 		switch errNo {
 		case OK:
@@ -574,6 +588,9 @@ exit:
 			go ms.handleRequest(req)
 		} else {
 			ms.handleRequest(req)
+		}
+		if ms.draining.Load() {
+			break exit
 		}
 	}
 }

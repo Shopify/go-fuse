@@ -5,7 +5,7 @@
 package fs
 
 import (
-	"github.com/hanwen/go-fuse/v2/fuse"
+	"github.com/Shopify/go-fuse/v2/fuse"
 )
 
 // Mount mounts the given NodeFS on the directory, and starts serving

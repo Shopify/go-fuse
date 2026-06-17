@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hanwen/go-fuse/v2/fuse"
-	"github.com/hanwen/go-fuse/v2/fuse/nodefs"
-	"github.com/hanwen/go-fuse/v2/fuse/pathfs"
+	"github.com/Shopify/go-fuse/v2/fuse"
+	"github.com/Shopify/go-fuse/v2/fuse/nodefs"
+	"github.com/Shopify/go-fuse/v2/fuse/pathfs"
 )
 
 func TestMountOnExisting(t *testing.T) {

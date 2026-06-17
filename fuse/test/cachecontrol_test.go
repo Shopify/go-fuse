@@ -14,9 +14,9 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/hanwen/go-fuse/v2/fuse"
-	"github.com/hanwen/go-fuse/v2/fuse/nodefs"
-	"github.com/hanwen/go-fuse/v2/internal/testutil"
+	"github.com/Shopify/go-fuse/v2/fuse"
+	"github.com/Shopify/go-fuse/v2/fuse/nodefs"
+	"github.com/Shopify/go-fuse/v2/internal/testutil"
 )
 
 // DataNode is a nodefs.Node that Reads static data.

@@ -1,4 +1,4 @@
-module github.com/hanwen/go-fuse/v2
+module github.com/Shopify/go-fuse/v2
 
 require (
 	github.com/kylelemons/godebug v1.1.0

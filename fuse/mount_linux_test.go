@@ -6,7 +6,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/hanwen/go-fuse/v2/internal/testutil"
+	"github.com/Shopify/go-fuse/v2/internal/testutil"
 	"github.com/moby/sys/mountinfo"
 )
 

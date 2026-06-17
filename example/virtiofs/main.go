@@ -8,8 +8,8 @@ import (
 	"flag"
 	"log"
 
-	"github.com/hanwen/go-fuse/v2/fs"
-	"github.com/hanwen/go-fuse/v2/virtiofs"
+	"github.com/Shopify/go-fuse/v2/fs"
+	"github.com/Shopify/go-fuse/v2/virtiofs"
 )
 
 func main() {

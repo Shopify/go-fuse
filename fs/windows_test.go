@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hanwen/go-fuse/v2/fs"
-	"github.com/hanwen/go-fuse/v2/internal/testutil"
+	"github.com/Shopify/go-fuse/v2/fs"
+	"github.com/Shopify/go-fuse/v2/internal/testutil"
 )
 
 func TestWindowsEmulations(t *testing.T) {

@@ -13,7 +13,7 @@ import (
 	"testing"
 	"unsafe"
 
-	"github.com/hanwen/go-fuse/v2/internal/ioctl"
+	"github.com/Shopify/go-fuse/v2/internal/ioctl"
 )
 
 type ioctlNode struct {

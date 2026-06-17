@@ -15,7 +15,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/hanwen/go-fuse/v2/fuse"
+	"github.com/Shopify/go-fuse/v2/fuse"
 )
 
 // StableAttr holds immutable attributes of a object in the filesystem.

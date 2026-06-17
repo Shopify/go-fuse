@@ -8,8 +8,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/hanwen/go-fuse/v2/fuse"
-	"github.com/hanwen/go-fuse/v2/internal/utimens"
+	"github.com/Shopify/go-fuse/v2/fuse"
+	"github.com/Shopify/go-fuse/v2/internal/utimens"
 )
 
 func (fs *loopbackFileSystem) Utimens(path string, a *time.Time, m *time.Time, context *fuse.Context) fuse.Status {

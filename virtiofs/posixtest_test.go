@@ -12,7 +12,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/hanwen/go-fuse/v2/fs"
+	"github.com/Shopify/go-fuse/v2/fs"
 )
 
 // buildStaticPosixtest compiles the posixtest package into a static test binary
@@ -23,7 +23,7 @@ func buildStaticPosixtest(t *testing.T) string {
 	bin := t.TempDir() + "/posixtest.test"
 	cmd := exec.Command("go", "test", "-c",
 		"-o", bin,
-		"github.com/hanwen/go-fuse/v2/posixtest",
+		"github.com/Shopify/go-fuse/v2/posixtest",
 	)
 	cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
 	out, err := cmd.CombinedOutput()

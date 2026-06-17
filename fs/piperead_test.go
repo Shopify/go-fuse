@@ -12,9 +12,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hanwen/go-fuse/v2/fuse"
-	"github.com/hanwen/go-fuse/v2/internal/testutil"
-	"github.com/hanwen/go-fuse/v2/splice"
+	"github.com/Shopify/go-fuse/v2/fuse"
+	"github.com/Shopify/go-fuse/v2/internal/testutil"
+	"github.com/Shopify/go-fuse/v2/splice"
 )
 
 type pipefailNode struct {

@@ -17,11 +17,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hanwen/go-fuse/v2/fuse"
-	"github.com/hanwen/go-fuse/v2/fuse/nodefs"
-	"github.com/hanwen/go-fuse/v2/fuse/pathfs"
-	"github.com/hanwen/go-fuse/v2/internal/testutil"
-	"github.com/hanwen/go-fuse/v2/posixtest"
+	"github.com/Shopify/go-fuse/v2/fuse"
+	"github.com/Shopify/go-fuse/v2/fuse/nodefs"
+	"github.com/Shopify/go-fuse/v2/fuse/pathfs"
+	"github.com/Shopify/go-fuse/v2/internal/testutil"
+	"github.com/Shopify/go-fuse/v2/posixtest"
 )
 
 type testCase struct {

@@ -14,8 +14,8 @@ import (
 	"sort"
 	"syscall"
 
-	"github.com/hanwen/go-fuse/v2/fs"
-	"github.com/hanwen/go-fuse/v2/fuse"
+	"github.com/Shopify/go-fuse/v2/fs"
+	"github.com/Shopify/go-fuse/v2/fuse"
 )
 
 func filePathHash(path string) string {

@@ -75,6 +75,9 @@ type Server struct {
 	draining     atomic.Bool
 	serving      bool // for preventing duplicate Serve() calls
 
+	// testAfterReadRequest lets tests observe a real request after it is counted and before dispatch.
+	testAfterReadRequest func()
+
 	// Used to implement WaitMount on macos.
 	ready chan error
 
@@ -509,6 +512,7 @@ func (ms *Server) handleInit() Status {
 	if errNo != OK || req == nil {
 		return errNo
 	}
+	ms.inflight.Add(1)
 	if code := ms.handleRequest(req); !code.Ok() {
 		return code
 	}
@@ -555,9 +559,9 @@ func (ms *Server) loop() {
 exit:
 	for {
 		// Draining is cooperative: a goroutine already parked in syscall.Read may
-		// still consume one more request before it observes the flag. That request
-		// is counted in inflight; callers bound DrainInflight and abandon hand-off
-		// on timeout rather than closing mountFd here.
+		// still consume one more request before it observes the flag. Real requests
+		// are counted as in-flight immediately after read, before dispatch, so
+		// DrainInflight waits even if a dispatch goroutine has not run yet.
 		if ms.draining.Load() {
 			break exit
 		}
@@ -584,6 +588,11 @@ exit:
 			break exit
 		}
 
+		ms.inflight.Add(1)
+		if ms.testAfterReadRequest != nil {
+			ms.testAfterReadRequest()
+		}
+
 		if ms.singleReader {
 			go ms.handleRequest(req)
 		} else {
@@ -596,7 +605,6 @@ exit:
 }
 
 func (ms *Server) handleRequest(req *requestAlloc) Status {
-	ms.inflight.Add(1)
 	defer ms.inflight.Done()
 	defer ms.returnRequest(req)
 	if ms.opts.SingleThreaded {

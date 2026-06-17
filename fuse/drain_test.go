@@ -116,6 +116,55 @@ func TestDrainInflightReturnsContextError(t *testing.T) {
 	close(fs.release)
 }
 
+func TestDrainInflightSingleReaderCountsReadRequestBeforeDispatch(t *testing.T) {
+	fs := newDrainSlowFS()
+	requestRead := make(chan struct{})
+	allowDispatch := make(chan struct{})
+	var allowDispatchOnce sync.Once
+	releaseDispatch := func() {
+		allowDispatchOnce.Do(func() { close(allowDispatch) })
+	}
+	defer releaseDispatch()
+	var releaseFSOnce sync.Once
+	releaseFS := func() {
+		releaseFSOnce.Do(func() { close(fs.release) })
+	}
+	defer releaseFS()
+
+	srv, peerFd, _ := newDrainTestServerWithDoneConfig(t, fs, func(srv *Server) {
+		srv.singleReader = true
+		srv.testAfterReadRequest = func() {
+			close(requestRead)
+			<-allowDispatch
+		}
+	})
+
+	writeGetAttrRequest(t, peerFd, 1)
+	waitForDrainTestSignal(t, requestRead, "GETATTR request to be read")
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	drainDone := make(chan error, 1)
+	go func() {
+		drainDone <- srv.DrainInflight(ctx)
+	}()
+
+	select {
+	case err := <-drainDone:
+		t.Fatalf("DrainInflight returned after read and before dispatch: %v", err)
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	releaseDispatch()
+	waitForDrainTestSignal(t, fs.entered, "single-reader GETATTR handler to enter")
+	assertDrainDoesNotReturn(t, drainDone)
+
+	releaseFS()
+	if err := waitForDrainResult(t, drainDone); err != nil {
+		t.Fatalf("DrainInflight returned %v, want nil", err)
+	}
+}
+
 func TestDrainInflightStopsServeLoopAndPreservesMountFd(t *testing.T) {
 	fs := newDrainForgetFS()
 	srv, peerFd, serveDone := newDrainTestServerWithDoneConfig(t, fs, func(srv *Server) {

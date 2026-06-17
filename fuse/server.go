@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 	"unsafe"
@@ -70,6 +71,8 @@ type Server struct {
 	singleReader bool
 	canSplice    bool
 	loops        sync.WaitGroup
+	inflight     sync.WaitGroup
+	draining     atomic.Bool
 	serving      bool // for preventing duplicate Serve() calls
 
 	// Used to implement WaitMount on macos.
@@ -576,6 +579,8 @@ exit:
 }
 
 func (ms *Server) handleRequest(req *requestAlloc) Status {
+	ms.inflight.Add(1)
+	defer ms.inflight.Done()
 	defer ms.returnRequest(req)
 	if ms.opts.SingleThreaded {
 		ms.requestProcessingMu.Lock()

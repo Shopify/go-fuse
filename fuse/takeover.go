@@ -141,6 +141,10 @@ func NewServerOnInitedFd(fs RawFileSystem, fd int, opts *MountOptions, settings 
 	}
 	ms.fileSystem.Init(ms)
 
+	if err := ms.setupDrainWake(); err != nil {
+		return nil, err
+	}
+
 	// Prepare for Serve() being called, mirroring NewServer.
 	ms.loops.Add(1)
 	return ms, nil

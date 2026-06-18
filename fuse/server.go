@@ -73,7 +73,10 @@ type Server struct {
 	loops        sync.WaitGroup
 	inflight     sync.WaitGroup
 	draining     atomic.Bool
-	serving      bool // for preventing duplicate Serve() calls
+	// drainWakeFd is an eventfd polled alongside mountFd so DrainInflight can
+	// wake readers out of poll without closing the FUSE connection. -1 when unused.
+	drainWakeFd int
+	serving     bool // for preventing duplicate Serve() calls
 
 	// testAfterReadRequest lets tests observe a real request after it is counted and before dispatch.
 	testAfterReadRequest func()
@@ -268,6 +271,11 @@ func NewServer(fs RawFileSystem, mountPoint string, opts *MountOptions) (*Server
 	ms.mountPoint = mountPoint
 	ms.mountFd = fd
 
+	if err := ms.setupDrainWake(); err != nil {
+		syscall.Close(fd)
+		return nil, err
+	}
+
 	if code := ms.handleInit(); !code.Ok() {
 		syscall.Close(fd)
 		// TODO - unmount as well?
@@ -379,6 +387,22 @@ func (ms *Server) readRequest() (req *requestAlloc, code Status) {
 	destIface := ms.readPool.Get()
 	dest := destIface.([]byte)
 
+	// Wait via poll so a drain can wake us out of the device read. When woken for
+	// draining we must not consume a request: leave whatever the kernel has queued
+	// for the successor server after fd hand-off.
+	woken, perr := ms.waitForRequest()
+	if woken || perr != nil {
+		ms.reqPool.Put(reqIface)
+		ms.readPool.Put(destIface)
+		ms.reqMu.Lock()
+		ms.reqReaders--
+		ms.reqMu.Unlock()
+		if perr != nil {
+			return nil, ToStatus(perr)
+		}
+		return nil, OK
+	}
+
 	var n int
 	err := handleEINTR(func() error {
 		var err error
@@ -465,6 +489,7 @@ func (ms *Server) Serve() {
 		log.Panic("Serve() must only be called once, you have called it a second time")
 	}
 	ms.serving = true
+	defer ms.closeDrainWake()
 
 	ms.loop()
 	ms.loops.Wait()
